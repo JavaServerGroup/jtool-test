@@ -5,6 +5,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Field;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -63,8 +65,42 @@ public abstract class AbstractControllerTest {
 		return mockHttpServletRequestBuilder;
 	}
 
+	@Deprecated
 	protected String requestContentString(String uri, Map<String, Object> params) throws UnsupportedEncodingException, Exception {
 		return this.mockMvc.perform(makePostByParams(uri, params)).andReturn().getResponse().getContentAsString();
 	}
-	
+
+	protected String requestContentStringByPost(String uri, Object bean) throws UnsupportedEncodingException, Exception {
+		Map<String, Object> params = convertBeanToRequestMap(bean);
+		return this.mockMvc.perform(makePostByParams(uri, params)).andReturn().getResponse().getContentAsString();
+	}
+
+	protected String requestContentStringByGet(String uri, Object bean) throws UnsupportedEncodingException, Exception {
+		Map<String, Object> params = convertBeanToRequestMap(bean);
+		return this.mockMvc.perform(makeGetByParams(uri, params)).andReturn().getResponse().getContentAsString();
+	}
+
+	protected String requestContentStringByGet(String uri) throws UnsupportedEncodingException, Exception {
+		Map<String, Object> params = new HashMap<>();
+		return this.mockMvc.perform(makeGetByParams(uri, params)).andReturn().getResponse().getContentAsString();
+	}
+
+	private static Map<String, Object> convertBeanToRequestMap(Object bean) {
+		Map<String, Object> result = new HashMap<>();
+		try {
+			Field[] f = bean.getClass().getDeclaredFields();
+			for(Field field : f){
+				field.setAccessible(true);
+				if(field.get(bean) != null) {
+					result.put(field.getName(), field.get(bean));
+				}
+			}
+		} catch (IllegalArgumentException e) {
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		}
+
+		return result;
+	}
 }
