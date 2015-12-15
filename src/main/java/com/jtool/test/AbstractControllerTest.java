@@ -13,6 +13,8 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
+import com.alibaba.fastjson.JSON;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.springframework.mock.web.MockMultipartFile;
@@ -85,7 +87,16 @@ public abstract class AbstractControllerTest {
 		return this.mockMvc.perform(makeGetByParams(uri, params)).andReturn().getResponse().getContentAsString();
 	}
 
-	private static Map<String, Object> convertBeanToRequestMap(Object bean) {
+	protected Code requestPostResponseCode(String uri, Object bean) throws Exception {
+		String source = this.requestContentStringByPost(uri, bean);
+		return JSON.parseObject(source, Code.class);
+	}
+
+	protected void assertPostResponseCode(String uri, Object obj, int code) throws Exception {
+		Assert.assertEquals(code, requestPostResponseCode(uri, obj).getCode());
+	}
+
+	private Map<String, Object> convertBeanToRequestMap(Object bean) {
 		Map<String, Object> result = new HashMap<>();
 		try {
 			Field[] f = bean.getClass().getDeclaredFields();
